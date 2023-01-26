@@ -1,6 +1,13 @@
 {
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.1",
-    "hardhat": "^2.12.6"
+    "@nomiclabs/hardhat-etherscan": "^3.1.5",
+    "hardhat": "^2.12.6",
+    "prettier": "^2.8.3",
+    "prettier-plugin-solidity": "^1.1.1"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "http-proxy-to-socks": "^1.1.2"
   }
 }
