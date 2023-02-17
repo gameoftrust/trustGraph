@@ -15,6 +15,19 @@ contract TrustGraph {
         uint8 confidence;
     }
 
+    bytes32 public constant SCORE_TYPE_HASH =
+        keccak256(
+            "Score(address from,address to,uint256 topicId,int8 score,uint8 confidence)"
+        );
+
+    bytes32 public constant DOMAIN_SEPARATOR =
+        keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name)"),
+                keccak256(bytes("Game of Trust"))
+            )
+        );
+
     TrustTopic[] public topics;
 
     // from => (to => (topicId => score))
@@ -106,30 +119,12 @@ contract TrustGraph {
         return
             keccak256(
                 abi.encode(
-                    keccak256(
-                        "Score(address from,address to,uint256 topicId,int8 score,uint8 confidence)"
-                    ),
+                    SCORE_TYPE_HASH,
                     score.from,
                     score.to,
                     score.topicId,
                     score.score,
                     score.confidence
-                )
-            );
-    }
-
-    /// @notice generates domain separator as described in EIP712 standard
-    /// @return domainSeparator
-    function _getDomainSeparator()
-        internal
-        pure
-        returns (bytes32 domainSeparator)
-    {
-        return
-            keccak256(
-                abi.encode(
-                    keccak256("EIP712Domain(string name)"),
-                    keccak256(bytes("Game of Trust"))
                 )
             );
     }
@@ -144,7 +139,7 @@ contract TrustGraph {
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
-                    _getDomainSeparator(),
+                    DOMAIN_SEPARATOR,
                     _getHashStruct(score)
                 )
             );
