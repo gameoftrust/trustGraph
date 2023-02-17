@@ -7,8 +7,11 @@ contract TrustGraph {
     }
 
     struct Score {
+        address from;
+        address to;
+        uint256 topicId;
         int8 score;
-        uint8 confidance;
+        uint8 confidence;
     }
 
     TrustTopic[] public topics;
@@ -18,6 +21,7 @@ contract TrustGraph {
         public scores;
 
     error TopicDoesNotExist();
+    error NotSigner();
 
     event TopicCreated(uint256 id, string title);
     event Scored(
@@ -42,12 +46,93 @@ contract TrustGraph {
         address to,
         uint256 topicId,
         int8 score,
-        uint8 confiance
+        uint8 confidence
     ) external {
-        if (topicId > topics.length) revert TopicDoesNotExist();
+        _scoreUser(Score(msg.sender, to, topicId, score, confidence));
+    }
 
-        scores[msg.sender][to][topicId] = Score(score, confiance);
+    function scoreUserWithSignature(
+        Score memory score,
+        bytes memory signature
+    ) external {
+        if (getSigner(score, signature) != score.from) revert NotSigner();
+        _scoreUser(score);
+    }
 
-        emit Scored(msg.sender, to, topicId, score, confiance);
+    function _scoreUser(Score memory score) internal {
+        if (score.topicId > topics.length) revert TopicDoesNotExist();
+        scores[score.from][score.to][score.topicId] = score;
+        emit Scored(
+            score.from,
+            score.to,
+            score.topicId,
+            score.score,
+            score.confidence
+        );
+    }
+
+    function getHashStruct(
+        Score memory score
+    ) internal pure returns (bytes32 hash) {
+        return
+            keccak256(
+                abi.encode(
+                    keccak256(
+                        "Score(address from,address to,uint256 topicId,int8 score,uint8 confidence)"
+                    ),
+                    score.from,
+                    score.to,
+                    score.topicId,
+                    score.score,
+                    score.confidence
+                )
+            );
+    }
+
+    function getDomainSeparator()
+        internal
+        pure
+        returns (bytes32 domainSeparator)
+    {
+        return
+            keccak256(
+                abi.encode(
+                    keccak256("EIP712Domain(string name)"),
+                    keccak256(bytes("Game of Trust"))
+                )
+            );
+    }
+
+    function getEncodedHash(
+        Score memory score
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    getDomainSeparator(),
+                    getHashStruct(score)
+                )
+            );
+    }
+
+    function splitSignature(
+        bytes memory sig
+    ) internal pure returns (bytes32 r, bytes32 s, uint8 v) {
+        require(sig.length == 65, "invalid signature length");
+
+        assembly {
+            r := mload(add(sig, 32))
+            s := mload(add(sig, 64))
+            v := byte(0, mload(add(sig, 96)))
+        }
+    }
+
+    function getSigner(
+        Score memory score,
+        bytes memory sig
+    ) internal pure returns (address) {
+        (bytes32 r, bytes32 s, uint8 v) = splitSignature(sig);
+        return ecrecover(getEncodedHash(score), v, r, s);
     }
 }
