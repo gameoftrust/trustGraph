@@ -17,12 +17,12 @@ describe("TrustGraph", async () => {
 
   it("should register new question", async () => {
     let title = "how old are you?";
-    await trustGraph.createQuestion(title);
+    await trustGraph.createTopic(title);
 
-    const len = await trustGraph.getQuestionsLength();
+    const len = await trustGraph.getTopicsLength();
     expect(len).eq(1);
 
-    const _title = await trustGraph.questions(0);
+    const _title = await trustGraph.topics(0);
     expect(_title).eq(title);
   });
 
@@ -46,12 +46,12 @@ describe("TrustGraph", async () => {
 
   it("should add another question", async () => {
     let title = "what's your height?";
-    await trustGraph.createQuestion(title);
+    await trustGraph.createTopic(title);
 
-    const len = await trustGraph.getQuestionsLength();
+    const len = await trustGraph.getTopicsLength();
     expect(len).eq(2);
 
-    const _title = await trustGraph.questions(1);
+    const _title = await trustGraph.topics(1);
     expect(_title).eq(title);
   });
 

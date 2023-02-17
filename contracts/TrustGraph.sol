@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 contract TrustGraph {
-    struct TrustQuestion {
+    struct TrustTopic {
         string title;
     }
 
@@ -11,16 +11,16 @@ contract TrustGraph {
         uint8 confidance;
     }
 
-    TrustQuestion[] public questions;
+    TrustTopic[] public topics;
 
-    // from => (to => (questionId => score))
+    // from => (to => (topicId => score))
     mapping(address => mapping(address => mapping(uint256 => Score)))
         public scores;
 
-    error QuestionDoesNotExist();
+    error TopicDoesNotExist();
 
-    event QuestionCreated(uint256 id, string title);
-    event Rated(
+    event TopicCreated(uint256 id, string title);
+    event Scored(
         address from,
         address to,
         uint256 questionId,
@@ -28,26 +28,26 @@ contract TrustGraph {
         uint8 confidance
     );
 
-    function getQuestionsLength() public view returns (uint256) {
-        return questions.length;
+    function getTopicsLength() public view returns (uint256) {
+        return topics.length;
     }
 
-    function createQuestion(string memory title) external {
-        uint256 id = questions.length;
-        questions.push(TrustQuestion(title));
-        emit QuestionCreated(id, title);
+    function createTopic(string memory title) external {
+        uint256 id = topics.length;
+        topics.push(TrustTopic(title));
+        emit TopicCreated(id, title);
     }
 
     function scoreUser(
         address to,
-        uint256 questionId,
+        uint256 topicId,
         int8 score,
         uint8 confiance
     ) external {
-        if (questionId > questions.length) revert QuestionDoesNotExist();
+        if (topicId > topics.length) revert TopicDoesNotExist();
 
-        scores[msg.sender][to][questionId] = Score(score, confiance);
+        scores[msg.sender][to][topicId] = Score(score, confiance);
 
-        emit Rated(msg.sender, to, questionId, score, confiance);
+        emit Scored(msg.sender, to, topicId, score, confiance);
     }
 }
