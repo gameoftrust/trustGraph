@@ -2,6 +2,7 @@
 pragma solidity ^0.8.9;
 
 contract TrustGraph {
+    // ================ STATE VARIABLES ==============
     struct TrustTopic {
         string title;
     }
@@ -20,9 +21,11 @@ contract TrustGraph {
     mapping(address => mapping(address => mapping(uint256 => Score)))
         public scores;
 
+    // ================ ERRORS ==============
     error TopicDoesNotExist();
     error NotSigner();
 
+    // ================ EVENTS ==============
     event TopicCreated(uint256 id, string title);
     event Scored(
         address from,
@@ -32,16 +35,30 @@ contract TrustGraph {
         uint8 confidance
     );
 
+    // ================ PUBLIC VIEWS ==============
+
+    /// @notice returns the length of the topics array
+    /// @return length
     function getTopicsLength() public view returns (uint256) {
         return topics.length;
     }
 
+    // ================ OPEN EXTERNAL FUNCTIONS ==============
+
+    /// @notice creates a new topic, the id of the newly created topic will it's index
+    /// in the topics array
+    /// @param title : the title of the topic
     function createTopic(string memory title) external {
         uint256 id = topics.length;
         topics.push(TrustTopic(title));
         emit TopicCreated(id, title);
     }
 
+    /// @notice score user, from msg.sender to "to"
+    /// @param to recipient of the score
+    /// @param topicId index of the topic in the topics array
+    /// @param score score that he msg.sender is giving
+    /// @param confidence the level of confidence of the msg.sender in the score
     function scoreUser(
         address to,
         uint256 topicId,
@@ -51,14 +68,23 @@ contract TrustGraph {
         _scoreUser(Score(msg.sender, to, topicId, score, confidence));
     }
 
+    /// @notice submit a score using an EIP712 signature from the sender of the score
+    /// which is the "from" field of the "score" object passed to this function
+    /// @param score score object according to Score struct
+    /// @param signature a signature on the score object from the sender
     function scoreUserWithSignature(
         Score memory score,
         bytes memory signature
     ) external {
-        if (getSigner(score, signature) != score.from) revert NotSigner();
+        if (_getSigner(score, signature) != score.from) revert NotSigner();
         _scoreUser(score);
     }
 
+    // ================ INTERNAL FUNCTIONS ==============
+
+    /// @notice saves the score object
+    /// @dev the event emitted is intended to be read off-chain to create a graph of scores
+    /// @param score score object
     function _scoreUser(Score memory score) internal {
         if (score.topicId > topics.length) revert TopicDoesNotExist();
         scores[score.from][score.to][score.topicId] = score;
@@ -71,7 +97,10 @@ contract TrustGraph {
         );
     }
 
-    function getHashStruct(
+    /// @notice generates a has struct of score object as specified in the EIP712 standard
+    /// @param score score object
+    /// @return hash the hash struct
+    function _getHashStruct(
         Score memory score
     ) internal pure returns (bytes32 hash) {
         return
@@ -89,7 +118,9 @@ contract TrustGraph {
             );
     }
 
-    function getDomainSeparator()
+    /// @notice generates domain separator as described in EIP712 standard
+    /// @return domainSeparator
+    function _getDomainSeparator()
         internal
         pure
         returns (bytes32 domainSeparator)
@@ -103,20 +134,28 @@ contract TrustGraph {
             );
     }
 
-    function getEncodedHash(
+    /// @notice generates a hash that is signed according to EIP712 standard
+    /// @param score score object
+    /// @return hash
+    function _getEncodedHash(
         Score memory score
     ) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
-                    getDomainSeparator(),
-                    getHashStruct(score)
+                    _getDomainSeparator(),
+                    _getHashStruct(score)
                 )
             );
     }
 
-    function splitSignature(
+    /// @notice given a hex signature it extracts its r, s and v components
+    /// @param sig bytes of the signature
+    /// @return r
+    /// @return s
+    /// @return v
+    function _splitSignature(
         bytes memory sig
     ) internal pure returns (bytes32 r, bytes32 s, uint8 v) {
         require(sig.length == 65, "invalid signature length");
@@ -128,11 +167,15 @@ contract TrustGraph {
         }
     }
 
-    function getSigner(
+    /// @notice recovers the signer of the score object from it's signature according to EIP712 standard
+    /// @param score score object
+    /// @param sig signature
+    /// @return singer
+    function _getSigner(
         Score memory score,
         bytes memory sig
     ) internal pure returns (address) {
-        (bytes32 r, bytes32 s, uint8 v) = splitSignature(sig);
-        return ecrecover(getEncodedHash(score), v, r, s);
+        (bytes32 r, bytes32 s, uint8 v) = _splitSignature(sig);
+        return ecrecover(_getEncodedHash(score), v, r, s);
     }
 }
