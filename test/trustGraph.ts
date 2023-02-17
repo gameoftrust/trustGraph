@@ -11,11 +11,11 @@ describe("TrustGraph", async () => {
   let user2: SignerWithAddress;
   let user3: SignerWithAddress;
 
-  const signature = "0xc83f50b69b63294e02de09f5ec61cae75d92914a649283d04c85c8c0047aad1268a5c72ce810cf6e5cd23e65755b2746a620298641a64a4093638335e2abc57a1c";
+  const signature = "0x72433dd3da6d1200434a3dd3071bc82a6a34c5256b3aa29b3fd1797cea7b13e460e4ca8fc36cfa7f86f7fca42417feeaefb765ed24da014cc8a6d12d808d964e1b";
   const score = {
-    from: "0x4A0c754fEACB01ABb449eaB5574a0aEA6FC5C9B8",
+    from: "0x7f96cE96b4E7e1F8AcCDFFFF1919513599a15B6E",
     to: "0x709961837DA9e54476F2E5D1572Fc930EB35389F",
-    topicId: BigNumber.from(0),
+    topicId: BigNumber.from(1),
     score: 10,
     confidence: 5
   }
