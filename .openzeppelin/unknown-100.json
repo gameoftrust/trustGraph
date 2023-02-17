@@ -1,0 +1,127 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0x1b7Fc6Ce1cc53Fb84Cce5d87c8C5a28d8898A89B",
+    "txHash": "0x577f2d207870147e0b8eb9dff340a127630b1e899e288b1aaac54241833f5414"
+  },
+  "proxies": [
+    {
+      "address": "0x3613840A8bbA65364724F37F4D4992F0CfC08c8e",
+      "txHash": "0x9eb201cdfdb65103c0ea10e1226270b415e8a399b9645777d6c532eade9f7bda",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "7c12f3e51f4e18a4618152456b11c66a11d670996508910e8de3efb544ddc892": {
+      "address": "0xd308981aA4EaC764bcF97d594260928290426e2e",
+      "txHash": "0xf872475b40c781d526450b6bd19b235b1e423f690a3974b113573d15bf437ae8",
+      "layout": {
+        "solcVersion": "0.8.17",
+        "storage": [
+          {
+            "label": "topics",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_array(t_struct(TrustTopic)4_storage)dyn_storage",
+            "contract": "TrustGraph",
+            "src": "contracts/TrustGraph.sol:31"
+          },
+          {
+            "label": "scores",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_mapping(t_uint256,t_struct(Score)15_storage)))",
+            "contract": "TrustGraph",
+            "src": "contracts/TrustGraph.sol:34"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(TrustTopic)4_storage)dyn_storage": {
+            "label": "struct TrustGraph.TrustTopic[]",
+            "numberOfBytes": "32"
+          },
+          "t_int8": {
+            "label": "int8",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_mapping(t_uint256,t_struct(Score)15_storage)))": {
+            "label": "mapping(address => mapping(address => mapping(uint256 => struct TrustGraph.Score)))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(Score)15_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct TrustGraph.Score))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(Score)15_storage)": {
+            "label": "mapping(uint256 => struct TrustGraph.Score)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Score)15_storage": {
+            "label": "struct TrustGraph.Score",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "to",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "topicId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "score",
+                "type": "t_int8",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "confidence",
+                "type": "t_uint8",
+                "offset": 1,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(TrustTopic)4_storage": {
+            "label": "struct TrustGraph.TrustTopic",
+            "members": [
+              {
+                "label": "title",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}

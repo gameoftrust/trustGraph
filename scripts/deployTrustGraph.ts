@@ -1,1 +1,3 @@
-async function deploy() {}
+import { deployTrustGraph } from "./deployers";
+
+deployTrustGraph(true).then().catch(console.log);
