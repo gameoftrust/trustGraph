@@ -9,6 +9,11 @@
       "address": "0x3613840A8bbA65364724F37F4D4992F0CfC08c8e",
       "txHash": "0x9eb201cdfdb65103c0ea10e1226270b415e8a399b9645777d6c532eade9f7bda",
       "kind": "transparent"
+    },
+    {
+      "address": "0x43654F6581290AF617ed86ff175866dEE181A199",
+      "txHash": "0x824aed1ab72ca43d5b0e46b473043a5e6a4929e546f0a28ec3231c20853887bd",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -111,6 +116,127 @@
               }
             ],
             "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "2378a2a4bcde6742d67fcfe46ebacc2652871fd5462713d925edd787d221fef4": {
+      "address": "0x483db327bA7397F338418ba1FFa4098204D8269D",
+      "txHash": "0x4de5520a581cb7e7408b9a2e5992218d119bc9cdf357c38a8b6c73a6f53d9d19",
+      "layout": {
+        "solcVersion": "0.8.17",
+        "storage": [
+          {
+            "label": "topics",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_array(t_struct(TrustTopic)10_storage)dyn_storage",
+            "contract": "TrustGraph",
+            "src": "contracts/TrustGraph.sol:34"
+          },
+          {
+            "label": "scores",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_struct(Score)21_storage)dyn_storage",
+            "contract": "TrustGraph",
+            "src": "contracts/TrustGraph.sol:37"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(Score)21_storage)dyn_storage": {
+            "label": "struct TrustGraph.Score[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(TrustTopic)10_storage)dyn_storage": {
+            "label": "struct TrustGraph.TrustTopic[]",
+            "numberOfBytes": "32"
+          },
+          "t_int8": {
+            "label": "int8",
+            "numberOfBytes": "1"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Score)21_storage": {
+            "label": "struct TrustGraph.Score",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "to",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "topicId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "score",
+                "type": "t_int8",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "confidence",
+                "type": "t_uint8",
+                "offset": 1,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(TrustTopic)10_storage": {
+            "label": "struct TrustGraph.TrustTopic",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "title",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "description",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "author",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
           },
           "t_uint256": {
             "label": "uint256",
