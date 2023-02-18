@@ -216,6 +216,8 @@ contract TrustGraph {
         return ecrecover(_getEncodedHash(score), v, r, s);
     }
 
+    // ================ MODIFIERS ==============
+
     modifier onlyAuthor(uint256 topicId) {
         if (msg.sender != topics[topicId].author) revert OnlyAuthor();
         _;
