@@ -26,52 +26,71 @@ describe("TrustGraph", async () => {
   });
 
   it("should register new question", async () => {
-    let title = "how old are you?";
-    await trustGraph.createTopic(title);
+    const title = "how old are you?";
+    const desc = "your age";
+    await trustGraph.connect(user1).createTopic(title, desc);
 
     const len = await trustGraph.getTopicsLength();
     expect(len).eq(1);
 
-    const _title = await trustGraph.topics(0);
-    expect(_title).eq(title);
+    const _topic = await trustGraph.topics(0);
+    expect(_topic.title).eq(title);
+    expect(_topic.description).eq(desc);
+    expect(_topic.author).eq(user1.address);
   });
 
   it("should rate a user", async () => {
     await trustGraph.connect(user1).scoreUser(user2.address, 0, 5, 10);
 
-    let score = await trustGraph.scores(user1.address, user2.address, 0);
+    const score = await trustGraph.scores(0);
+    const len = await trustGraph.getTopicsLength();
 
+    expect(score.from).eq(user1.address);
+    expect(score.to).eq(user2.address);
     expect(score.score).eq(5);
     expect(score.confidence).eq(10);
-  });
-
-  it("should override rates", async () => {
-    await trustGraph.connect(user1).scoreUser(user2.address, 0, 8, 4);
-
-    let score = await trustGraph.scores(user1.address, user2.address, 0);
-
-    expect(score.score).eq(8);
-    expect(score.confidence).eq(4);
+    expect(len).eq(1);
   });
 
   it("should add another question", async () => {
-    let title = "what's your height?";
-    await trustGraph.createTopic(title);
+    const title = "what's your height?";
+    const desc = "your height"
+    await trustGraph.connect(user2).createTopic(title, desc);
 
     const len = await trustGraph.getTopicsLength();
     expect(len).eq(2);
 
-    const _title = await trustGraph.topics(1);
-    expect(_title).eq(title);
+    const _topic = await trustGraph.topics(1);
+    expect(_topic.title).eq(title);
+    expect(_topic.description).eq(desc);
+    expect(_topic.author).eq(user2.address);
   });
+
+  it("user 1 should fail to edit user2's topic", async () => {
+    const tx = trustGraph.connect(user2).editTopic(0, "new desc");
+    await expect(tx).to.be.revertedWithCustomError(
+      trustGraph,
+      "OnlyAuthor"
+    );
+  })
+
+  it("user 1 should be able to edit topic 0", async () => {
+    await trustGraph.connect(user1).editTopic(0, "new desc");
+    expect((await trustGraph.topics(0)).description).eq("new desc");
+  })
 
   it("should rate user 3", async () => {
     await trustGraph.connect(user2).scoreUser(user3.address, 1, 8, 4);
 
-    let score = await trustGraph.scores(user2.address, user3.address, 1);
+    let score = await trustGraph.scores(1);
+    const len = await trustGraph.getTopicsLength();
 
+    expect(score.from).eq(user2.address);
+    expect(score.to).eq(user3.address);
+    expect(score.topicId).eq(1);
     expect(score.score).eq(8);
     expect(score.confidence).eq(4);
+    expect(len).eq(2);
   });
 
   it("should not be able to score with wrong signature", async () => {
@@ -83,8 +102,11 @@ describe("TrustGraph", async () => {
   })
   it("should score with valid signature", async () => {
     await trustGraph.scoreUserWithSignature(score, signature);
-    let _score = await trustGraph.scores(score.from, score.to, score.topicId);
+    let _score = await trustGraph.scores(2);
 
+    expect(_score.from).eq(score.from);
+    expect(_score.to).eq(score.to);
+    expect(_score.topicId).eq(score.topicId);
     expect(_score.score).eq(score.score);
     expect(_score.confidence).eq(score.confidence);
   })

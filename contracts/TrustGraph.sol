@@ -4,7 +4,10 @@ pragma solidity ^0.8.9;
 contract TrustGraph {
     // ================ STATE VARIABLES ==============
     struct TrustTopic {
+        uint256 id; // position of this topic in topics array
         string title;
+        string description;
+        address author;
     }
 
     struct Score {
@@ -31,21 +34,26 @@ contract TrustGraph {
     TrustTopic[] public topics;
 
     // from => (to => (topicId => score))
-    mapping(address => mapping(address => mapping(uint256 => Score)))
-        public scores;
+    Score[] public scores;
 
     // ================ ERRORS ==============
     error TopicDoesNotExist();
     error NotSigner();
+    error OnlyAuthor();
 
     // ================ EVENTS ==============
-    event TopicCreated(uint256 id, string title);
+    event TopicCreated(
+        uint256 id,
+        string title,
+        string description,
+        address author
+    );
     event Scored(
         address from,
         address to,
         uint256 questionId,
         int8 score,
-        uint8 confidance
+        uint8 confidence
     );
 
     // ================ PUBLIC VIEWS ==============
@@ -56,15 +64,49 @@ contract TrustGraph {
         return topics.length;
     }
 
+    /// @notice returns the length of scores array
+    /// @return length
+    function getScoresLength() public view returns (uint256) {
+        return scores.length;
+    }
+
+    /// @notice gets a slice of the scores array
+    /// @param fromIndex start index of slice (inclusive)
+    /// @param toIndex end index of slice (inclusive)
+    /// @return scores the sliced list
+    function getScores(
+        uint256 fromIndex,
+        uint256 toIndex
+    ) public view returns (Score[] memory) {
+        Score[] memory _scores = new Score[](toIndex - fromIndex + 1);
+        for (uint256 i = fromIndex; i <= toIndex; i++) {
+            _scores[i] = scores[i];
+        }
+        return _scores;
+    }
+
     // ================ OPEN EXTERNAL FUNCTIONS ==============
 
     /// @notice creates a new topic, the id of the newly created topic will it's index
     /// in the topics array
     /// @param title : the title of the topic
-    function createTopic(string memory title) external {
+    function createTopic(
+        string memory title,
+        string memory description
+    ) external {
         uint256 id = topics.length;
-        topics.push(TrustTopic(title));
-        emit TopicCreated(id, title);
+        topics.push(TrustTopic(id, title, description, msg.sender));
+        emit TopicCreated(id, title, description, msg.sender);
+    }
+
+    /// @notice author of the topics can change it's description
+    /// @param topicId index of the topic in topics array
+    /// @param description the new description
+    function editTopic(
+        uint256 topicId,
+        string memory description
+    ) external onlyAuthor(topicId) {
+        topics[topicId].description = description;
     }
 
     /// @notice score user, from msg.sender to "to"
@@ -100,7 +142,7 @@ contract TrustGraph {
     /// @param score score object
     function _scoreUser(Score memory score) internal {
         if (score.topicId > topics.length) revert TopicDoesNotExist();
-        scores[score.from][score.to][score.topicId] = score;
+        scores.push(score);
         emit Scored(
             score.from,
             score.to,
@@ -172,5 +214,10 @@ contract TrustGraph {
     ) internal pure returns (address) {
         (bytes32 r, bytes32 s, uint8 v) = _splitSignature(sig);
         return ecrecover(_getEncodedHash(score), v, r, s);
+    }
+
+    modifier onlyAuthor(uint256 topicId) {
+        if (msg.sender != topics[topicId].author) revert OnlyAuthor();
+        _;
     }
 }
