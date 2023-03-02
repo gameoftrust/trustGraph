@@ -49,6 +49,8 @@ contract TrustGraph {
             )
         );
 
+    mapping(address => uint256) public nonce; // address => nonce (number of scores the address has given to others)
+
     TrustTopic[] public topics;
 
     // from => (to => (topicId => score))
@@ -58,6 +60,7 @@ contract TrustGraph {
     error TopicDoesNotExist();
     error NotSigner();
     error OnlyAuthor();
+    error InvalidNonce();
 
     // ================ EVENTS ==============
     event TopicCreated(
@@ -155,7 +158,12 @@ contract TrustGraph {
     function _endorseUser(Endorsement memory endorsement) internal {
         address _from = endorsement.from;
         address _to = endorsement.to;
+
+        // check nonce
+        if (nonce[_from] != endorsement.nonce) revert InvalidNonce();
+
         for (uint8 i = 0; i < endorsement.scores.length; i++) {
+            nonce[_from]++;
             RawScore memory rawScore = endorsement.scores[i];
             if (rawScore.topicId > topics.length) revert TopicDoesNotExist();
             scores.push(

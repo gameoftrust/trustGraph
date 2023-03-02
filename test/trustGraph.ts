@@ -139,7 +139,7 @@ describe("TrustGraph", async () => {
 
   it("should rate user 3 with different from passed in", async () => {
     const endorsement = {
-      nonce: 0,
+      nonce: 1,
       from: user3.address,
       to: user3.address,
       scores: [
@@ -172,6 +172,7 @@ describe("TrustGraph", async () => {
     await trustGraph.endorseUserWithSignature(signedEndorsement, signature);
     let _score3 = await trustGraph.scores(3);
     let _score4 = await trustGraph.scores(4);
+    let _nonce = await trustGraph.nonce(_score3.from);
 
     // both scores should have same from, to
     expect(_score3.from).eq(_score4.from);
@@ -188,6 +189,8 @@ describe("TrustGraph", async () => {
     expect(_score4.topicId).eq(signedEndorsement.scores[1].topicId);
     expect(_score4.score).eq(signedEndorsement.scores[1].score);
     expect(_score4.confidence).eq(signedEndorsement.scores[1].confidence);
+
+    expect(_nonce).eq(2);
 
   })
 });
