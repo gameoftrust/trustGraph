@@ -10,6 +10,21 @@ contract TrustGraph {
         address author;
     }
 
+    /// @dev used for function argument
+    struct Endorsement {
+        uint256 nonce;
+        address from;
+        address to;
+        RawScore[] scores;
+    }
+
+    /// @dev used only in Endorsement struct
+    struct RawScore {
+        uint256 topicId;
+        int8 score;
+        uint8 confidence;
+    }
+
     struct Score {
         address from;
         address to;
@@ -18,10 +33,13 @@ contract TrustGraph {
         uint8 confidence;
     }
 
-    bytes32 public constant SCORE_TYPE_HASH =
+    bytes32 public constant ENDORSEMENT_TYPE_HASH =
         keccak256(
-            "Score(address from,address to,uint256 topicId,int8 score,uint8 confidence)"
+            "Endorsement(uint256 nonce,address from,address to,RawScore[] scores)RawScore(uint256 topicId,int8 score,uint8 confidence)"
         );
+
+    bytes32 public constant RAW_SCORE_TYPE_HASH =
+        keccak256("RawScore(uint256 topicId,int8 score,uint8 confidence)");
 
     bytes32 public constant DOMAIN_SEPARATOR =
         keccak256(
@@ -109,80 +127,111 @@ contract TrustGraph {
         topics[topicId].description = description;
     }
 
-    /// @notice score user, from msg.sender to "to"
-    /// @param to recipient of the score
-    /// @param topicId index of the topic in the topics array
-    /// @param score score that he msg.sender is giving
-    /// @param confidence the level of confidence of the msg.sender in the score
-    function scoreUser(
-        address to,
-        uint256 topicId,
-        int8 score,
-        uint8 confidence
-    ) external {
-        _scoreUser(Score(msg.sender, to, topicId, score, confidence));
+    /// @notice Endorse another user on various topics, the "from" is ignored
+    /// @param endorsement the endorsement submitted
+    function endorseUser(Endorsement memory endorsement) external {
+        endorsement.from = msg.sender;
+        _endorseUser(endorsement);
     }
 
     /// @notice submit a score using an EIP712 signature from the sender of the score
     /// which is the "from" field of the "score" object passed to this function
-    /// @param score score object according to Score struct
+    /// @param endorsement score object according to Score struct
     /// @param signature a signature on the score object from the sender
-    function scoreUserWithSignature(
-        Score memory score,
+    function endorseUserWithSignature(
+        Endorsement memory endorsement,
         bytes memory signature
     ) external {
-        if (_getSigner(score, signature) != score.from) revert NotSigner();
-        _scoreUser(score);
+        if (_getSigner(endorsement, signature) != endorsement.from)
+            revert NotSigner();
+        _endorseUser(endorsement);
     }
 
     // ================ INTERNAL FUNCTIONS ==============
 
-    /// @notice saves the score object
+    /// @notice saves the score object from endorsement
     /// @dev the event emitted is intended to be read off-chain to create a graph of scores
-    /// @param score score object
-    function _scoreUser(Score memory score) internal {
-        if (score.topicId > topics.length) revert TopicDoesNotExist();
-        scores.push(score);
-        emit Scored(
-            score.from,
-            score.to,
-            score.topicId,
-            score.score,
-            score.confidence
-        );
+    /// @param endorsement score object
+    function _endorseUser(Endorsement memory endorsement) internal {
+        address _from = endorsement.from;
+        address _to = endorsement.to;
+        for (uint8 i = 0; i < endorsement.scores.length; i++) {
+            RawScore memory rawScore = endorsement.scores[i];
+            if (rawScore.topicId > topics.length) revert TopicDoesNotExist();
+            scores.push(
+                Score(
+                    _from,
+                    _to,
+                    rawScore.topicId,
+                    rawScore.score,
+                    rawScore.confidence
+                )
+            );
+            emit Scored(
+                _from,
+                _to,
+                rawScore.topicId,
+                rawScore.score,
+                rawScore.confidence
+            );
+        }
     }
 
-    /// @notice generates a has struct of score object as specified in the EIP712 standard
-    /// @param score score object
-    /// @return hash the hash struct
-    function _getHashStruct(
-        Score memory score
-    ) internal pure returns (bytes32 hash) {
+    /// @notice hashes RawScore object
+    /// @param rawScore rawScore object
+    /// @return hash struct hash of RawScore object
+    function hash(RawScore memory rawScore) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encode(
-                    SCORE_TYPE_HASH,
-                    score.from,
-                    score.to,
-                    score.topicId,
-                    score.score,
-                    score.confidence
+                    RAW_SCORE_TYPE_HASH,
+                    rawScore.topicId,
+                    rawScore.score,
+                    rawScore.confidence
                 )
             );
     }
 
-    /// @notice generates a hash that is signed according to EIP712 standard
-    /// @param score score object
-    /// @return hash
-    function _getEncodedHash(
-        Score memory score
+    /// @notice hashes RawScores array objects
+    /// @param rawScores rawScore object
+    /// @return hash array struct hash of RawScore object
+    function hash(RawScore[] memory rawScores) internal pure returns (bytes32) {
+        bytes memory _hash;
+        for (uint8 i = 0; i < rawScores.length; i++)
+            _hash = abi.encodePacked(_hash, hash(rawScores[i]));
+        return keccak256(_hash);
+    }
+
+    /// @notice hashes Endorsement array object
+    /// @param endorsement endorsement object
+    /// @return hash struct hash of Endorsement object
+    function hash(
+        Endorsement memory endorsement
+    ) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    ENDORSEMENT_TYPE_HASH,
+                    endorsement.nonce,
+                    endorsement.from,
+                    endorsement.to,
+                    hash(endorsement.scores)
+                )
+            );
+    }
+
+    /// @notice calculates hash digest of Endorsement object for EIP-712 signature verification
+    /// @param endorsement Endorsement object
+    /// @return digest hash digest
+    function digest(
+        Endorsement memory endorsement
     ) internal pure returns (bytes32) {
         return
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
                     DOMAIN_SEPARATOR,
-                    _getHashStruct(score)
+                    hash(endorsement)
                 )
             );
     }
@@ -204,16 +253,16 @@ contract TrustGraph {
         }
     }
 
-    /// @notice recovers the signer of the score object from it's signature according to EIP712 standard
-    /// @param score score object
+    /// @notice recovers the signer of the Endorsement object from it's signature according to EIP-712 standard
+    /// @param endorsement Endorsement object
     /// @param sig signature
     /// @return singer
     function _getSigner(
-        Score memory score,
+        Endorsement memory endorsement,
         bytes memory sig
     ) internal pure returns (address) {
         (bytes32 r, bytes32 s, uint8 v) = _splitSignature(sig);
-        return ecrecover(_getEncodedHash(score), v, r, s);
+        return ecrecover(digest(endorsement), v, r, s);
     }
 
     // ================ MODIFIERS ==============

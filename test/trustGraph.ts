@@ -1,5 +1,5 @@
 import { deployTrustGraph } from "../scripts/deployers";
-import { TrustGraph } from "../typechain-types";
+import { TrustGraph, TrustGraph__factory } from "../typechain-types";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
@@ -11,13 +11,21 @@ describe("TrustGraph", async () => {
   let user2: SignerWithAddress;
   let user3: SignerWithAddress;
 
-  const signature = "0x72433dd3da6d1200434a3dd3071bc82a6a34c5256b3aa29b3fd1797cea7b13e460e4ca8fc36cfa7f86f7fca42417feeaefb765ed24da014cc8a6d12d808d964e1b";
-  const score = {
+  const signature = "0xe988c5f7294694a9fb693686e99c23c000a9fa83cdd5b6e9668d96655e232bc611d4a1425a681574e1633144366cc8b80a5972e9673e598b25423de8ccf2f6e01c";
+  const signedEndorsement = {
+    nonce: 0,
     from: "0x7f96cE96b4E7e1F8AcCDFFFF1919513599a15B6E",
     to: "0x709961837DA9e54476F2E5D1572Fc930EB35389F",
-    topicId: BigNumber.from(1),
-    score: 10,
-    confidence: 5
+    scores: [{
+      topicId: BigNumber.from(1),
+      score: 10,
+      confidence: 5
+    }, {
+      topicId: BigNumber.from(2),
+      score: 6,
+      confidence: 2
+    }
+    ]
   }
 
   before(async () => {
@@ -40,7 +48,19 @@ describe("TrustGraph", async () => {
   });
 
   it("should rate a user", async () => {
-    await trustGraph.connect(user1).scoreUser(user2.address, 0, 5, 10);
+    const endorsement = {
+      nonce: 0,
+      from: user1.address,
+      to: user2.address,
+      scores: [
+        {
+          topicId: 0,
+          score: 5,
+          confidence: 10
+        }
+      ]
+    }
+    await trustGraph.connect(user1).endorseUser(endorsement);
 
     const score = await trustGraph.scores(0);
     const len = await trustGraph.getTopicsLength();
@@ -66,6 +86,20 @@ describe("TrustGraph", async () => {
     expect(_topic.author).eq(user2.address);
   });
 
+  it("should add another question (id 2 )", async () => {
+    const title = "did you go to college?";
+    const desc = "degree"
+    await trustGraph.connect(user2).createTopic(title, desc);
+
+    const len = await trustGraph.getTopicsLength();
+    expect(len).eq(3);
+
+    const _topic = await trustGraph.topics(2);
+    expect(_topic.title).eq(title);
+    expect(_topic.description).eq(desc);
+    expect(_topic.author).eq(user2.address);
+  });
+
   it("user 1 should fail to edit user2's topic", async () => {
     const tx = trustGraph.connect(user2).editTopic(0, "new desc");
     await expect(tx).to.be.revertedWithCustomError(
@@ -80,34 +114,80 @@ describe("TrustGraph", async () => {
   })
 
   it("should rate user 3", async () => {
-    await trustGraph.connect(user2).scoreUser(user3.address, 1, 8, 4);
+    const endorsement = {
+      nonce: 0,
+      from: user2.address,
+      to: user3.address,
+      scores: [
+        {
+          topicId: 1,
+          score: 8,
+          confidence: 4
+        }
+      ]
+    }
+    await trustGraph.connect(user2).endorseUser(endorsement);
 
     let score = await trustGraph.scores(1);
-    const len = await trustGraph.getTopicsLength();
 
     expect(score.from).eq(user2.address);
     expect(score.to).eq(user3.address);
     expect(score.topicId).eq(1);
     expect(score.score).eq(8);
     expect(score.confidence).eq(4);
-    expect(len).eq(2);
+  });
+
+  it("should rate user 3 with different from passed in", async () => {
+    const endorsement = {
+      nonce: 0,
+      from: user3.address,
+      to: user3.address,
+      scores: [
+        {
+          topicId: 1,
+          score: 8,
+          confidence: 4
+        }
+      ]
+    }
+    await trustGraph.connect(user2).endorseUser(endorsement);
+
+    let score = await trustGraph.scores(1);
+
+    expect(score.from).eq(user2.address);
+    expect(score.to).eq(user3.address);
+    expect(score.topicId).eq(1);
+    expect(score.score).eq(8);
+    expect(score.confidence).eq(4);
   });
 
   it("should not be able to score with wrong signature", async () => {
-    const tx = trustGraph.scoreUserWithSignature(score, signature.replace('a', 'b'));
+    const tx = trustGraph.endorseUserWithSignature(signedEndorsement, signature.replace('a', 'b'));
     await expect(tx).to.be.revertedWithCustomError(
       trustGraph,
       "NotSigner"
     );
   })
   it("should score with valid signature", async () => {
-    await trustGraph.scoreUserWithSignature(score, signature);
-    let _score = await trustGraph.scores(2);
+    await trustGraph.endorseUserWithSignature(signedEndorsement, signature);
+    let _score3 = await trustGraph.scores(3);
+    let _score4 = await trustGraph.scores(4);
 
-    expect(_score.from).eq(score.from);
-    expect(_score.to).eq(score.to);
-    expect(_score.topicId).eq(score.topicId);
-    expect(_score.score).eq(score.score);
-    expect(_score.confidence).eq(score.confidence);
+    // both scores should have same from, to
+    expect(_score3.from).eq(_score4.from);
+    expect(_score3.to).eq(_score4.to);
+    expect(_score3.from).eq(signedEndorsement.from);
+    expect(_score3.to).eq(signedEndorsement.to);
+
+    // score 3 check
+    expect(_score3.topicId).eq(signedEndorsement.scores[0].topicId);
+    expect(_score3.score).eq(signedEndorsement.scores[0].score);
+    expect(_score3.confidence).eq(signedEndorsement.scores[0].confidence);
+
+    // score 4 check
+    expect(_score4.topicId).eq(signedEndorsement.scores[1].topicId);
+    expect(_score4.score).eq(signedEndorsement.scores[1].score);
+    expect(_score4.confidence).eq(signedEndorsement.scores[1].confidence);
+
   })
 });
