@@ -14,6 +14,11 @@
       "address": "0x43654F6581290AF617ed86ff175866dEE181A199",
       "txHash": "0x824aed1ab72ca43d5b0e46b473043a5e6a4929e546f0a28ec3231c20853887bd",
       "kind": "transparent"
+    },
+    {
+      "address": "0x7edf4837B20D98f515A8de3A0F90089B83eaE4a3",
+      "txHash": "0xea66586c4f77b51a6ba3be316bb970d11b531a6ad9f6990f6dede3e11136f6b0",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -173,6 +178,139 @@
             "numberOfBytes": "32"
           },
           "t_struct(Score)21_storage": {
+            "label": "struct TrustGraph.Score",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "to",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "topicId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "score",
+                "type": "t_int8",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "confidence",
+                "type": "t_uint8",
+                "offset": 1,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(TrustTopic)10_storage": {
+            "label": "struct TrustGraph.TrustTopic",
+            "members": [
+              {
+                "label": "id",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "title",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "description",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "author",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "06542cc806fd70bd9b239ccba789600abd24942a44c7f924e65be433e5aa6048": {
+      "address": "0x4e84901f7B025e7b79D121a1E01F2d2ABA7f4798",
+      "txHash": "0x658b1dc48aed8fff183c374ddcc84316c3e9c3c5026466b6e032170ed7c2fae9",
+      "layout": {
+        "solcVersion": "0.8.17",
+        "storage": [
+          {
+            "label": "nonce",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "TrustGraph",
+            "src": "contracts/TrustGraph.sol:52"
+          },
+          {
+            "label": "topics",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_struct(TrustTopic)10_storage)dyn_storage",
+            "contract": "TrustGraph",
+            "src": "contracts/TrustGraph.sol:54"
+          },
+          {
+            "label": "scores",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_struct(Score)39_storage)dyn_storage",
+            "contract": "TrustGraph",
+            "src": "contracts/TrustGraph.sol:57"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_struct(Score)39_storage)dyn_storage": {
+            "label": "struct TrustGraph.Score[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(TrustTopic)10_storage)dyn_storage": {
+            "label": "struct TrustGraph.TrustTopic[]",
+            "numberOfBytes": "32"
+          },
+          "t_int8": {
+            "label": "int8",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(Score)39_storage": {
             "label": "struct TrustGraph.Score",
             "members": [
               {
